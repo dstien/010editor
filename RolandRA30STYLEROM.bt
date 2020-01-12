@@ -1,0 +1,62 @@
+//------------------------------------------------
+//--- 010 Editor v10.0 Binary Template
+//
+//      File: RolandRA30STYLEROM.bt
+//   Authors: Daniel Stien <daniel@stien.org>
+//   Version: 
+//   Purpose: Roland RA-30 style ROM.
+//  Category: Misc
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+#include "RolandArrangerTypes.bt"
+
+FSeek(0x00000);
+ChunkCollection Chunks01(55);
+
+FSeek(0x08000);
+ChunkCollection Chunks02(100);
+
+FSeek(0x10000);
+ChunkCollection Chunks03(131);
+
+FSeek(0x18000);
+ChunkCollection Chunks04(170);
+
+FSeek(0x20000);
+ChunkCollection Chunks05(234);
+
+FSeek(0x28000);
+ChunkCollection Chunks06(316);
+
+FSeek(0x30000);
+ChunkCollection Chunks07(512);
+
+FSeek(0x38000);
+ChunkCollection Chunks08(790);
+
+FSeek(0x40000);
+ChunkCollection Chunks09(68);
+
+FSeek(0x48000);
+ChunkCollection Chunks0A(109);
+
+FSeek(0x50000);
+ChunkCollection Chunks0B(141);
+
+FSeek(0x58000);
+ChunkCollection Chunks0C(182);
+
+FSeek(0x60000);
+ChunkCollection Chunks0D(237);
+
+FSeek(0x68000);
+ChunkCollection Chunks0E(326);
+
+FSeek(0x70000);
+ChunkCollection Chunks0F(496);
+
+FSeek(0x78000);
+ChunkCollection Chunks10(975);

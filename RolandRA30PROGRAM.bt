@@ -1,0 +1,48 @@
+//------------------------------------------------
+//--- 010 Editor v10.0 Binary Template
+//
+//      File: RolandRA30PROGRAM.bt
+//   Authors: Daniel Stien <daniel@stien.org>
+//   Version: 
+//   Purpose: Roland RA-30 program ROM.
+//  Category: Misc
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+#include "RolandArrangerTypes.bt"
+
+FSeek(0x10000);
+Instrument Instruments[224];
+Sample     Samples[144];
+
+FSeek(0x20000);
+DrumSample DrumSamples2[70];
+
+FSeek(0x2BD00);
+Sample     DrumSamples3[41];
+
+FSeek(0x38080);
+Drumset Drumsets[9];
+
+FSeek(0x3CA00);
+GsInit GsInits;
+
+FSeek(0x50000);
+ubyte StyleHeaders[0x4CCC];
+
+FSeek(0x57000);
+struct {
+    uint16 Unknown1;
+    uint16 Unknown2;
+} SomeTable[0x800];
+
+FSeek(0x60000);
+ChunkCollection Chunks01(90);
+FSeek(0x68000);
+ChunkCollection Chunks02(408);
+FSeek(0x70000);
+ChunkCollection Chunks02(496);
+FSeek(0x78000);
+ChunkCollection Chunks02(975);

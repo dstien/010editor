@@ -1,0 +1,114 @@
+//------------------------------------------------
+//--- 010 Editor v10.0 Binary Template
+//
+//      File: RolandE28ROM.bt
+//   Authors: Daniel Stien <daniel@stien.org>
+//   Version: 
+//   Purpose: Roland E-28 program ROM.
+//  Category: Misc
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+#include "RolandArrangerTypes.bt"
+
+FSeek(0x2718);
+Label ModelBanner(16);
+FSeek(0x2B104);
+Label Version(16);
+FSeek(0x6D84);
+char Credits[28];
+FSeek(0x6F1B);
+char GsBanner[16];
+FSeek(0xBADE);
+char DemoBanner[55];
+
+// Instruments
+FSeek(0x10000);
+Instrument Instruments[224];
+Sample     Samples[144];
+
+// Drums
+FSeek(0x20000);
+DrumSample DrumSamples2[65];
+
+// Something...
+FSeek(0x27000);
+//ubyte Something[0x2000];
+struct {
+    ubyte b0, b1, b2, b3;
+} Something[2048];
+
+
+FSeek(0x29D93);
+char RomTestBanner[32];
+FSeek(0x2A516);
+Label Str(-1)[57];
+FSeek(0x2AEE8);
+char TestMenuLabels[540];
+//char TestMenuStrings2[15];
+//char TestMenuStrings3[15];
+//char TestMenuStrings4[15];
+FSeek(0x2B104);
+char VersionBanner[16];
+
+FSeek(0x2BD00);
+Sample     DrumSamples3[37];
+
+// Drums
+//Instrument Drums[65];
+FSeek(0x30000);
+uint16 indices[128];
+FSeek(0x38080);
+Drumset Drumsets[13];
+
+
+// GS init
+FSeek(0x3CA00);
+GsInit GsInits;
+
+// Style data?
+FSeek(0x40000);
+ChunkCollection Chunks1(139);
+FSeek(0x50000);
+ChunkCollection Chunks2a(312);
+FSeek(0x60000);
+ChunkCollection Chunks2b(593);
+FSeek(0x70000);
+ChunkCollection Chunks2c(785);
+
+// Demos?
+FSeek(0x78000);
+struct {
+    struct {
+        uint16 Unknown0;
+        uint16 Offset;
+    } TOC[8];
+
+    local int c, o, offsetcount;
+    for (c = 0; c < 8; c++) {
+        struct {
+            offsetcount = 0;
+            do {
+                uint16 offsets;
+                offsetcount++;
+            } while (offsets != 0x0F0F);
+            
+            for (o = 0; o < offsetcount - 1; o++) {
+                struct {
+                    local int nextOffset = offsets[o + 1];
+                    if (nextOffset == 0x0F0F) {
+                        if (c == 7) {
+                            nextOffset = 0xF428;
+                        }
+                        else {
+                            nextOffset = Chunks3.TOC[c+1].Offset;
+                        }
+                    }
+                    ubyte data[nextOffset - offsets[o]];
+                } Chunks;
+            }
+        } ChunksContainer;
+    }
+} Chunks3;

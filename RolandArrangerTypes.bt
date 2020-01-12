@@ -1,0 +1,143 @@
+//------------------------------------------------
+//--- 010 Editor v10.0 Binary Template
+//
+//      File: RolandArrangerTypes.bt
+//   Authors: Daniel Stien <daniel@stien.org>
+//   Version: 
+//   Purpose: Common types used in Roland arranger ROM images.
+//  Category: Misc
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+typedef struct (int length)
+{
+    if (length == -1) {
+        ubyte SpecifiedLength;
+        length = SpecifiedLength;
+    }
+    char Value[length];
+} Label <optimize=false,comment=CommentLabel>;
+
+string CommentLabel(Label &s)
+{
+    return s.Value;
+}
+
+typedef struct
+{
+    char  Name[12];
+    char  Data0[23];
+    ubyte Sample;
+    char  Data[180];
+} Instrument <comment=CommentInstrument>;
+
+string CommentInstrument(Instrument &i)
+{
+    string s;
+    SPrintf(s, "%s (%i)", i.Name, i.Sample);
+    return s;
+}
+
+typedef struct
+{
+    char Name[12];
+    char Data[48];
+} Sample <comment=CommentSample>;
+
+string CommentSample(Sample &s)
+{
+    return s.Name;
+}
+
+typedef struct
+{
+    char Name[12];
+    char Data[204];
+} DrumSample <comment=CommentDrumSample>;
+
+string CommentDrumSample(DrumSample &s)
+{
+    return s.Name;
+}
+
+typedef struct
+{
+    char Data[1152];
+    char Name[12];
+} Drumset <comment=CommentDrumset>;
+
+string CommentDrumset(Drumset &d)
+{
+    return d.Name;
+}
+
+typedef struct
+{
+    char Header[25];
+    byte TitleLength;
+    char Title[TitleLength];
+} Smf <comment=CommentSmf>;
+
+string CommentSmf(Smf &s)
+{
+    return s.Title;
+}
+
+// GS Init?
+typedef struct
+{
+    uint16 Unknown0[4];
+    char   Frustration[16];
+    uchar  Unknown1[48];
+    struct
+    {
+        uint32 Data0;
+        uchar  Channel;
+        uchar  Data1[107];
+    } Channel[16];
+    char Version[32];
+/*
+    // Nah.
+    uint16 countUnknown2;
+    uchar unknown2[countUnknown2 * 10];
+    uint16 unknown3;
+    uchar unknown4[18 * 10];
+*/
+} GsInit;
+
+// Chunk of custom coded MIDI messages
+typedef struct
+{
+    while (true) {
+        ubyte cmd;
+        if (cmd == 0x3F/* || cmd == 0xFF*/) break;
+    }
+} Chunk <comment=CommentChunk,optimize=false>;
+
+string CommentChunk(Chunk &c)
+{
+    local string s;
+    local int i, m;
+    for (i = 0, m = Min(10, sizeof(c)); i < m; i++) {
+        SPrintf(s, "%s %02X", s, c.cmd[i]);
+    }
+    SPrintf(s, "%s ... (%d)", s, sizeof(c));
+    return s;
+return "...";
+}
+
+typedef struct (int count)
+{
+    BitfieldDisablePadding();
+    int Unknown : 24;
+    Chunk Chunks[count];
+} ChunkCollection <comment=CommentChunkCollection,optimize=false>;
+
+string CommentChunkCollection(ChunkCollection &c)
+{
+    local string s;
+    SPrintf(s, "%d", c.Unknown);
+    return s;
+}
