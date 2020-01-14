@@ -10,6 +10,7 @@
 //  ID Bytes: 
 //   History: 
 //------------------------------------------------
+#define TICKS_PER_BEAT 24
 
 typedef struct (int length)
 {
@@ -111,12 +112,20 @@ typedef struct
 {
     ubyte  Segments[3];
     ushort Offsets[6];
-    ushort Unknown2;
+    ubyte  TicksPerBar;
+    ubyte  Tempo;
     struct {
         ubyte  Segments[9];
         ushort Offsets[18];
     } ChunkReferences[4];
-} StyleHeader;
+} StyleHeader <comment=CommentStyleHeader>;
+
+string CommentStyleHeader(StyleHeader &h)
+{
+    local string s;
+    SPrintf(s, "%d/4 @ %d BPM", h.TicksPerBar / TICKS_PER_BEAT, h.Tempo);
+    return s;
+}
 
 // Chunk of custom coded MIDI messages
 typedef struct
