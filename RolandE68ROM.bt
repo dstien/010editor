@@ -16,12 +16,14 @@
 FSeek(0x31AC);
 char ModelBanner1[16];
 
-FSeek(0x8FC3);
-Label DrumsetNames(8)[9];
-FSeek(0x97D0);
-Label InstrumentNames(8)[241];
-FSeek(0xD312);
-Label StyleNames(8)[64];
+struct {
+    FSeek(0x8FC3);
+    Label DrumsetNames(8)[9];
+    FSeek(0x97D0);
+    Label InstrumentNames(8)[241];
+    FSeek(0xD312);
+    Label StyleNames(8)[64];
+} Names;
 
 // Instruments
 FSeek(0x10000);
@@ -42,34 +44,44 @@ uint16 indices[128];
 FSeek(0x38080);
 Drumset Drumsets[13];
 
-
-// Style stuff?
 FSeek(0x3CA00);
 GsInit GsInits;
 
-FSeek(0x4107D);
-char CreditsFull1[168];
+struct {
+    FSeek(0x4107D);
+    char CreditsFull1[168];
 
-FSeek(0x417DE);
-Label RecorderLabels(8)[117];
+    FSeek(0x417DE);
+    Label RecorderLabels(8)[117];
 
-FSeek(0x41D18);
-Label FloppyLabels1(8)[67];
+    FSeek(0x41D18);
+    Label FloppyLabels1(8)[67];
 
-FSeek(0x47103);
-char DemoBanner1[48];
-Label DemoLabels1(8)[3];
+    FSeek(0x47103);
+    char DemoBanner1[48];
+    Label DemoLabels1(8)[3];
 
-FSeek(0x4EB7A);
-Label TestMenuLabels(16)[94];
+    FSeek(0x4EB7A);
+    Label TestMenuLabels(16)[94];
+} Labels;
 
 // Something...
-FSeek(0x50000); // 0x27000 in E-28
-ubyte Something[0x2000];
+FSeek(0x50000);
+struct {
+    ubyte b0, b1, b2, b3;
+} Something[2048];
 
+// Style definitions
+FSeek(0x5B119);
+StyleHeader StyleHeaders[64];
+
+// Style events
 FSeek(0x70000);
-ChunkCollection Chunks1(142);
+ChunkCollection Chunks1(52);
+FSeek(0x78000);
+ChunkCollection Chunks2(90);
 
+// Strings
 struct {
     FSeek(0x831AC);
     char ModelBanner2[16];
@@ -83,12 +95,17 @@ struct {
     Label StyleNames2(8)[64];
 } Names;
 
+// Style events
 FSeek(0x90000);
-ChunkCollection Chunks2a(312);
+ChunkCollection Chunks3(130);
+FSeek(0x98000);
+ChunkCollection Chunks4(182);
 FSeek(0xA0000);
-ChunkCollection Chunks2b(592);
+ChunkCollection Chunks5(240);
+FSeek(0xA8000);
+ChunkCollection Chunks6(353);
 FSeek(0xB0000);
-ChunkCollection Chunks2c(783);
+ChunkCollection Chunks7(783);
 
 struct {
     FSeek(0xC107D);

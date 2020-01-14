@@ -24,6 +24,10 @@ char GsBanner[16];
 FSeek(0xBADE);
 char DemoBanner[55];
 
+// Style definitions
+FSeek(0xCE07);
+StyleHeader StyleHeaders[64];
+
 // Instruments
 FSeek(0x10000);
 Instrument Instruments[224];
@@ -35,7 +39,6 @@ DrumSample DrumSamples2[65];
 
 // Something...
 FSeek(0x27000);
-//ubyte Something[0x2000];
 struct {
     ubyte b0, b1, b2, b3;
 } Something[2048];
@@ -44,12 +47,11 @@ struct {
 FSeek(0x29D93);
 char RomTestBanner[32];
 FSeek(0x2A516);
-Label Str(-1)[57];
+struct {
+    Label Str(-1)[57];
+} MenuLabels;
 FSeek(0x2AEE8);
 char TestMenuLabels[540];
-//char TestMenuStrings2[15];
-//char TestMenuStrings3[15];
-//char TestMenuStrings4[15];
 FSeek(0x2B104);
 char VersionBanner[16];
 
@@ -68,15 +70,21 @@ Drumset Drumsets[13];
 FSeek(0x3CA00);
 GsInit GsInits;
 
-// Style data?
+// Style events
 FSeek(0x40000);
-ChunkCollection Chunks1(139);
+ChunkCollection Chunks1(51);
+FSeek(0x48000);
+ChunkCollection Chunks2(88);
 FSeek(0x50000);
-ChunkCollection Chunks2a(312);
+ChunkCollection Chunks3(130);
+FSeek(0x58000);
+ChunkCollection Chunks4(182);
 FSeek(0x60000);
-ChunkCollection Chunks2b(593);
+ChunkCollection Chunks5(240);
+FSeek(0x68000);
+ChunkCollection Chunks6(353);
 FSeek(0x70000);
-ChunkCollection Chunks2c(785);
+ChunkCollection Chunks7(785);
 
 // Demos?
 FSeek(0x78000);
@@ -103,7 +111,7 @@ struct {
                             nextOffset = 0xF428;
                         }
                         else {
-                            nextOffset = Chunks3.TOC[c+1].Offset;
+                            nextOffset = Chunks8.TOC[c+1].Offset;
                         }
                     }
                     ubyte data[nextOffset - offsets[o]];
@@ -111,4 +119,4 @@ struct {
             }
         } ChunksContainer;
     }
-} Chunks3;
+} Chunks8;

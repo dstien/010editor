@@ -30,7 +30,7 @@ FSeek(0x3CA00);
 GsInit GsInits;
 
 FSeek(0x50000);
-ubyte StyleHeaders[0x4CCC];
+StyleHeader StyleHeaders[100];
 
 FSeek(0x57000);
 struct {
@@ -39,10 +39,10 @@ struct {
 } SomeTable[0x800];
 
 FSeek(0x60000);
-ChunkCollection Chunks01(90);
+ChunkCollection Chunks1(90);
 FSeek(0x68000);
-ChunkCollection Chunks02(408);
+ChunkCollection Chunks2(408);
 FSeek(0x70000);
-ChunkCollection Chunks02(496);
+ChunkCollection Chunks3(496);
 FSeek(0x78000);
-ChunkCollection Chunks02(975);
+ChunkCollection Chunks4(975);

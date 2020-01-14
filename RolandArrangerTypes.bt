@@ -107,9 +107,21 @@ typedef struct
 */
 } GsInit;
 
+typedef struct
+{
+    ubyte  Segments[3];
+    ushort Offsets[6];
+    ushort Unknown2;
+    struct {
+        ubyte  Segments[9];
+        ushort Offsets[18];
+    } ChunkReferences[4];
+} StyleHeader;
+
 // Chunk of custom coded MIDI messages
 typedef struct
 {
+    //Printf("0x%04X, ", FTell() & 0xFFFF);
     while (true) {
         ubyte cmd;
         if (cmd == 0x3F/* || cmd == 0xFF*/) break;
@@ -130,6 +142,7 @@ return "...";
 
 typedef struct (int count)
 {
+    //Printf("\n");
     BitfieldDisablePadding();
     int Unknown : 24;
     Chunk Chunks[count];
