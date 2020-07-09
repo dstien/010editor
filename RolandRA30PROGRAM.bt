@@ -29,6 +29,9 @@ Drumset Drumsets[9];
 FSeek(0x3CA00);
 GsInit GsInits;
 
+FSeek(0x4FA80);
+Label DemoBanners(50)[8];
+
 FSeek(0x50000);
 StyleHeader StyleHeaders[100];
 
@@ -37,6 +40,16 @@ struct {
     uint16 Unknown1;
     uint16 Unknown2;
 } SomeTable[0x800];
+
+FSeek(0x59C80);
+char ModelBanner[31];
+FSeek(0x5AA92);
+Label CardMessages(16)[5];
+FSeek(0x5B3AE);
+Label MiscLabels(-1)[64];
+FSeek(0x5C1D0);
+char TestMenuLabels[874];
+char VersionBanner[16];
 
 FSeek(0x60000);
 ChunkCollection Chunks1(90);
