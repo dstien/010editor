@@ -19,12 +19,7 @@ typedef struct (int length)
         length = SpecifiedLength;
     }
     char Value[length];
-} Label <optimize=false,comment=CommentLabel>;
-
-string CommentLabel(Label &s)
-{
-    return s.Value;
-}
+} Label <optimize=false,read=Str("%s", Value)>;
 
 typedef struct
 {
@@ -32,59 +27,32 @@ typedef struct
     char  Data0[23];
     ubyte Sample;
     char  Data[180];
-} Instrument <comment=CommentInstrument>;
-
-string CommentInstrument(Instrument &i)
-{
-    string s;
-    SPrintf(s, "%s (%i)", i.Name, i.Sample);
-    return s;
-}
+} Instrument <read=Str("%s (%i)", Name, Sample)>;
 
 typedef struct
 {
     char Name[12];
     char Data[48];
-} Sample <comment=CommentSample>;
-
-string CommentSample(Sample &s)
-{
-    return s.Name;
-}
+} Sample <read=Str("%s", Name)>;
 
 typedef struct
 {
     char Name[12];
     char Data[204];
-} DrumSample <comment=CommentDrumSample>;
-
-string CommentDrumSample(DrumSample &s)
-{
-    return s.Name;
-}
+} DrumSample <read=Str("%s", Name)>;
 
 typedef struct
 {
     char Data[1152];
     char Name[12];
-} Drumset <comment=CommentDrumset>;
-
-string CommentDrumset(Drumset &d)
-{
-    return d.Name;
-}
+} Drumset <read=Str("%s", Name)>;
 
 typedef struct
 {
     char Header[25];
     byte TitleLength;
     char Title[TitleLength];
-} Smf <comment=CommentSmf>;
-
-string CommentSmf(Smf &s)
-{
-    return s.Title;
-}
+} Smf <read=Str("%s", Title)>;
 
 // GS Init?
 typedef struct
@@ -155,11 +123,6 @@ typedef struct (int count)
     BitfieldDisablePadding();
     int Unknown : 24;
     Chunk Chunks[count];
-} ChunkCollection <comment=CommentChunkCollection,optimize=false>;
+} ChunkCollection <comment=Str("%d", Unknown),optimize=false>;
 
-string CommentChunkCollection(ChunkCollection &c)
 {
-    local string s;
-    SPrintf(s, "%d", c.Unknown);
-    return s;
-}
