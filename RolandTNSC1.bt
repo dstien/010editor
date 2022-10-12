@@ -1,0 +1,39 @@
+//------------------------------------------------
+//--- 010 Editor v12.0 Binary Template
+//
+//      File: RolandTNSC1.bt
+//   Authors: Daniel Stien <daniel@stien.org>
+//   Version: 
+//   Purpose: Roland TN-SC1 ROM style card.
+//  Category: Misc
+// File Mask: *.bin
+//  ID Bytes: 52 6F 6C 61 6E 64 20 45 2D 32 30 20 [+4] 54 4E 2D 53 43 31 2D // "Roland E-20 " +4 "TN-SC1-"
+//   History: 
+//------------------------------------------------
+BigEndian();
+#include "RolandArrangerTypes.bt"
+
+#define SC1_BASE_OFFSET 0x4000
+
+struct {
+    char   Target[12];    // "Roland E-20 "
+    uint32 Unknown1;      // Always 0x4EB151AE
+    char   CardName[16];  //"TN-SC1-nn"
+    uint16 StyleNamesOffset;
+    uint16 StyleHeadersOffset;
+    uint16 StyleDataOffset;
+    uint16 Reserved[5]; // Null
+
+    FSeek(StyleNamesOffset);
+    Label StyleNames(16)[8];
+} SC1Header;
+
+FSeek(SC1Header.StyleHeadersOffset);
+
+local int64 StyleSegments[8];
+StyleSegments[7] = -SC1_BASE_OFFSET;
+
+local int s;
+for (s = 0; s < 8; s++) {
+    StyleHeader StyleHeaders(SC1Header.StyleNames[s].Value, StyleSegments)<optimize=false>;
+}
