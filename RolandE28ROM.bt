@@ -6,11 +6,11 @@
 //   Version: 
 //   Purpose: Roland E-28 program ROM.
 //  Category: Misc
-// File Mask: 
-//  ID Bytes: 
+// File Mask: *.bin
+//  ID Bytes: 0C 07 00 48
 //   History: 
 //------------------------------------------------
-
+BigEndian();
 #include "RolandArrangerTypes.bt"
 
 FSeek(0x2718);

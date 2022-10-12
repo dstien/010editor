@@ -6,11 +6,11 @@
 //   Version: 
 //   Purpose: Roland E-68 program ROM.
 //  Category: Misc
-// File Mask: 
-//  ID Bytes: 
+// File Mask: *.bin
+//  ID Bytes: 47 44 03 08
 //   History: 
 //------------------------------------------------
-
+BigEndian();
 #include "RolandArrangerTypes.bt"
 
 FSeek(0x31AC);
