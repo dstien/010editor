@@ -33,7 +33,8 @@ FSeek(0x4FA80);
 Label DemoBanners(50)[8];
 
 FSeek(0x50000);
-StyleHeader StyleHeaders[100];
+// Disabled while dissecting events in E-28/E-68 ROMs.
+//StyleHeader StyleHeaders[100];
 
 FSeek(0x57000);
 struct {

@@ -73,7 +73,20 @@ struct {
 
 // Style definitions
 FSeek(0x5B119);
-StyleHeader StyleHeaders[64];
+local int64 StyleSegments[7];
+StyleSegments[0] = 0x70000;
+StyleSegments[1] = 0x70000;
+local int i;
+for (i = 2; i < 7; i++) {
+    StyleSegments[i] = 0x80000 + (0x8000 * (i - i % 2));
+    Printf("Segment %d : Addr %05X\n", i+1, StyleSegments[i]);
+}
+
+local int s;
+for (s = 0; s < 64; s++) {
+    // FIXME: Style name order and style definition order differ.
+    StyleHeader StyleHeaders(Names.StyleNames[s].Value, StyleSegments)<optimize=false>;
+}
 
 // Style events
 FSeek(0x70000);

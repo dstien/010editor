@@ -1,5 +1,5 @@
 //------------------------------------------------
-//--- 010 Editor v10.0 Binary Template
+//--- 010 Editor v12.0 Binary Template
 //
 //      File: RolandArrangerTypes.bt
 //   Authors: Daniel Stien <daniel@stien.org>
@@ -11,6 +11,8 @@
 //   History: 
 //------------------------------------------------
 #define TICKS_PER_BEAT 24
+#define PHRASES 6
+#define CHORD_MODES 3
 
 typedef struct (int length)
 {
@@ -67,49 +69,122 @@ typedef struct
         uchar  Data1[107];
     } Channel[16];
     char Version[32];
-/*
-    // Nah.
-    uint16 countUnknown2;
-    uchar unknown2[countUnknown2 * 10];
-    uint16 unknown3;
-    uchar unknown4[18 * 10];
-*/
 } GsInit;
+
+typedef enum
+{
+    EventNote,
+    EventProgramChange,
+    EventEnd
+} EventType;
+
+struct Note;
+
+// FIXME: Incomplete implementation.
+typedef struct (int root)
+{
+    byte NoteOn;
+    byte Velocity : 4;
+    byte Length : 4;
+
+    local int isChained<hidden=true>;
+    if (root) {
+        // If root node's first child is self, there's not chaining.
+        isChained = ReadByte() != NoteOn;
+    }
+    else {
+        // If child's child has zero velocity, there's no further chaining.
+        isChained = ReadByte(FTell() + 1) != 0;
+    }
+    if (isChained) {
+        Note Chained(0);
+    }
+    byte NoteOff;
+    if (!root) {
+        byte VelocityOff : 4;
+        byte LengthOff : 4;
+    }
+    if (NoteOff & 0x40) {
+        byte Unknown;
+    }
+    // Optional note-off velocity?
+    //else if (ReadByte() == 0) {
+    //    byte VelocityOff : 4;
+    //    byte LengthOff : 4;
+    //}
+} Note;
 
 typedef struct
 {
-    ubyte  Segments[3];
-    ushort Offsets[6];
-    ubyte  TicksPerBar;
-    ubyte  Tempo;
-    struct {
-        ubyte  Segments[9];
-        ushort Offsets[18];
-    } ChunkReferences[4];
-} StyleHeader <comment=CommentStyleHeader>;
+    local EventType Type;
 
-string CommentStyleHeader(StyleHeader &h)
-{
-    local string s;
-    SPrintf(s, "%d/4 @ %d BPM", h.TicksPerBar / TICKS_PER_BEAT, h.Tempo);
-    return s;
-}
+    byte Flag : 1;
+    if (Flag) {
+        Type = EventProgramChange;
+        byte Program : 7;
+    }
+    else {
+        byte Delta : 7;
+        if (ReadByte() == 0x3F) {
+            Type = EventEnd;
+            byte EndOfTrack;
+        }
+        else {
+            Type = EventNote;
+            Note n(1);
+        }
+    }
+} Event <read=Str("Event %s", EnumToString(e.Type)),optimize=false>;
 
 // Chunk of custom coded MIDI messages
 typedef struct
 {
-    //Printf("0x%04X, ", FTell() & 0xFFFF);
     while (true) {
-        ubyte cmd;
-        if (cmd == 0x3F/* || cmd == 0xFF*/) break;
+        Event Events;
+        if (Events.Type == EventEnd) break;
     }
-} Chunk <comment=CommentChunk,optimize=false>;
+} Chunk <read=ReadChunk,optimize=false>;
 
-string CommentChunk(Chunk &c)
+string ReadChunk(Chunk &c)
 {
+/*
+Drums?
+0 80  Standard
+1 88? Room
+2 90  Power
+3 98  Electronic
+4 99  TR-808
+5 Jazz
+6 Brush
+7 Orchestra
+8 Sfx
+
+Velocity is stored in 4 bits (127, 119, 111, 103, 95, 87, 79, 71, 63, 55, 47, 39, 31, 23, 15, 7)
+
+M'TOWN Drums Phrase lengths (notes)
+
+Intro         47 (Data[4],  4.21 bpn)
+Original      94 (Data[0],  4.05 bpn)
+To variation ~13 (Data[2]?, 5.07 bpn)
+Variation     94 (Data[1],  4.01 bpn)
+To original  ~16 (Data[3]?, 5.06 bpn)
+Ending        36 (Data[5],  3.81 bpn)
+
+Event:
+byte HasDelta : 1
+if (HasDelta)
+    byte delta : 7
+    byte note // 0: C3
+else
+    byte note : 7
+byte velocity : 4
+byte unknown :4
+int
+*/
+
     local string s;
     local int i, m;
-    for (i = 0, m = Min(10, sizeof(c)); i < m; i++) {
+    for (i = 0, m = Min(50, sizeof(c)); i < m; i++) {
         SPrintf(s, "%s %02X", s, c.cmd[i]);
     }
     SPrintf(s, "%s ... (%d)", s, sizeof(c));
@@ -119,10 +194,73 @@ return "...";
 
 typedef struct (int count)
 {
-    //Printf("\n");
     BitfieldDisablePadding();
     int Unknown : 24;
     Chunk Chunks[count];
 } ChunkCollection <comment=Str("%d", Unknown),optimize=false>;
 
+typedef struct (byte segment, int64 styleSegments[])
 {
+    local byte Segment = segment;
+    ushort Offset;
+    local int64 Full = styleSegments[segment - 1] + Offset;
+} Ptr <read=Str("%X:%04X (%06X)", Segment, Offset, Full)>;
+
+// TODO: Figure out the segments are mapped. Endianess change? Interleaving?
+local int segmap[18];
+segmap[ 0] = 1;
+segmap[ 1] = 0;
+segmap[ 2] = 3;
+//segmap[ 3] = 4; // !!
+segmap[ 3] = 2;
+segmap[ 4] = 5;
+//segmap[ 5] = 2; // !!
+segmap[ 5] = 4;
+segmap[ 6] = 7;
+segmap[ 7] = 6;
+segmap[ 8] = 9;
+segmap[ 9] = 8;
+segmap[10] = 11;
+segmap[11] = 10;
+segmap[12] = 13;
+segmap[13] = 12;
+segmap[14] = 15;
+segmap[15] = 17; // !!
+segmap[16] = 16; // !!
+segmap[17] = 14;
+
+typedef struct (int count, int64 styleSegments[])
+{
+    struct (int count, int64 styleSegments[]) {
+        local int i;
+        for (i = 0; i < count; i++) {
+            byte Segments : 4;
+        }
+
+        for (i = 0; i < count; i++) {
+            Ptr Offsets(Segments[segmap[i]], styleSegments);
+        }
+    } Ptrs(count, styleSegments);
+
+    local int64 pos <hidden=true> = FTell();
+    local int i;
+    for (i = 0; i < count; i++) {
+        FSeek(Ptrs.Offsets[i].Full);
+        Chunk Data;
+    }
+    FSeek(pos);
+} ChunkRefs <optimize=false>;
+
+typedef struct (char name[], int64 styleSegments[])
+{
+    local string Name = name;
+    ChunkRefs DrumChunks(PHRASES, styleSegments);
+    ubyte  TicksPerBar;
+    ubyte  Tempo;
+    // Current hypothesis:
+    // 4 (Bass, Accomp1, Accomp2, Accomp3) * 18 (3 chord variants (major, minor, seventh) * 6 phrases (Intro, Original, Variation, ToOriginal, ToVariation, Ending))
+    ChunkRefs BassChunks(PHRASES * CHORD_MODES, styleSegments);
+    ChunkRefs Part2Chunks(PHRASES * CHORD_MODES, styleSegments);
+    ChunkRefs Part3Chunks(PHRASES * CHORD_MODES, styleSegments);
+    ChunkRefs Part4Chunks(PHRASES * CHORD_MODES, styleSegments);
+} StyleHeader <read=Str("%s %d/4 @ %d BPM", Name, TicksPerBar / TICKS_PER_BEAT, Tempo)>;

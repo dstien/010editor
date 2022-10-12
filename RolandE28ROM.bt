@@ -26,7 +26,88 @@ char DemoBanner[55];
 
 // Style definitions
 FSeek(0xCE07);
-StyleHeader StyleHeaders[64];
+
+local int64 StyleSegments[7];
+local int i;
+for (i = 0; i < 7; i++) {
+    StyleSegments[i] = 0x40000 + (0x8000 * (i - i % 2));
+    Printf("Segment %d : Addr %05X\n", i+1, StyleSegments[i]);
+}
+
+local struct {
+    local char Value[9];
+} StyleNames[64];
+
+StyleNames[ 0].Value = "ROCK    ";
+StyleNames[ 1].Value = "BALROCK ";
+StyleNames[ 2].Value = "RAP     ";
+StyleNames[ 3].Value = "HOUSE   ";
+StyleNames[ 4].Value = "DANCE 1 ";
+StyleNames[ 5].Value = "DANCE 2 ";
+StyleNames[ 6].Value = "FUNK    ";
+StyleNames[ 7].Value = "CONTEMP ";
+StyleNames[ 8].Value = "8 BEAT 1";
+StyleNames[ 9].Value = "8 BEAT 2";
+StyleNames[10].Value = "8 BEAT 3";
+StyleNames[11].Value = "8 BEAT 4";
+StyleNames[12].Value = "16 BEAT1";
+StyleNames[13].Value = "16 BEAT2";
+StyleNames[14].Value = "16 BEAT3";
+StyleNames[15].Value = "16 BEAT4";
+StyleNames[16].Value = "BOOGIE  ";
+StyleNames[17].Value = "ROCK'N 1";
+StyleNames[18].Value = "ROCK'N 2";
+StyleNames[19].Value = "SLROCK 1";
+StyleNames[20].Value = "SLROCK 2";
+StyleNames[21].Value = "TWIST   ";
+StyleNames[22].Value = "BALLAD 1";
+StyleNames[23].Value = "BALLAD 2";
+StyleNames[24].Value = "SLSWING1";
+StyleNames[25].Value = "SLSWING2";
+StyleNames[26].Value = "SWING   ";
+StyleNames[27].Value = "BIGBAND ";
+StyleNames[28].Value = "R&B     ";
+StyleNames[29].Value = "SHUFFLE ";
+StyleNames[30].Value = "DIXIE   ";
+StyleNames[31].Value = "CHARLEST";
+StyleNames[32].Value = "BOSSA   ";
+StyleNames[33].Value = "LATIN   ";
+StyleNames[34].Value = "CHA CHA ";
+StyleNames[35].Value = "MERENGUE";
+StyleNames[36].Value = "POPROCK ";
+StyleNames[37].Value = "RHUMBA  ";
+StyleNames[38].Value = "BEGUINE ";
+StyleNames[39].Value = "TANGO   ";
+StyleNames[40].Value = "SAMBA 1 ";
+StyleNames[41].Value = "SAMBA 2 ";
+StyleNames[42].Value = "SALSA   ";
+StyleNames[43].Value = "MAMBO 1 ";
+StyleNames[44].Value = "MAMBO 2 ";
+StyleNames[45].Value = "REGGAE  ";
+StyleNames[46].Value = "FUSION  ";
+StyleNames[47].Value = "BAROQUE ";
+StyleNames[48].Value = "SL WALTZ";
+StyleNames[49].Value = "JZ WALTZ";
+StyleNames[50].Value = "WALTZ   ";
+StyleNames[51].Value = "MARCH   ";
+StyleNames[52].Value = "FOXTROT ";
+StyleNames[53].Value = "POLKA   ";
+StyleNames[54].Value = "D MARSCH";
+StyleNames[55].Value = "SCHLAGER";
+StyleNames[56].Value = "BLUES   ";
+StyleNames[57].Value = "COUNTRY ";
+StyleNames[58].Value = "SEVILLA ";
+StyleNames[59].Value = "SPRHUMBA";
+StyleNames[60].Value = "MUSETTE ";
+StyleNames[61].Value = "FR WALTZ";
+StyleNames[62].Value = "SCOUNTRY";
+StyleNames[63].Value = "S BOOGIE";
+
+local int s;
+for (s = 0; s < 64; s++) {
+    // TODO: Verify style order.
+    StyleHeader StyleHeaders(StyleNames[s].Value, StyleSegments)<optimize=false>;
+}
 
 // Instruments
 FSeek(0x10000);
