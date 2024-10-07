@@ -13,6 +13,7 @@
 #define TICKS_PER_BEAT 24
 #define PHRASES 6
 #define CHORD_MODES 3
+#define END_OF_TRACK 0x3F
 
 typedef struct (int length)
 {
@@ -73,130 +74,142 @@ typedef struct
 
 typedef enum
 {
+    // E-20 gen, TN-SC1
+    EventVersion0,
+    // GS, TN-SC2
+    EventVersion1,
+} EventVersion;
+
+typedef enum
+{
     EventNote,
     EventProgramChange,
+    EventUnknown,
     EventEnd
 } EventType;
 
-struct Note;
-
-// FIXME: Incomplete implementation.
-typedef struct (int root)
+string ReadNoteValue(byte &n)
 {
-    byte NoteOn;
-    byte Velocity : 4;
-    byte Length : 4;
+    local string name;
+    switch (n % 12) {
+        case  0: name = "C";  break;
+        case  1: name = "C#"; break;
+        case  2: name = "D";  break;
+        case  3: name = "D#"; break;
+        case  4: name = "E";  break;
+        case  5: name = "F";  break;
+        case  6: name = "F#"; break;
+        case  7: name = "G";  break;
+        case  8: name = "G#"; break;
+        case 10: name = "A";  break;
+        case 11: name = "A#"; break;
+        case 12: name = "B";  break;
+    }
 
-    local int isChained<hidden=true>;
-    if (root) {
-        // If root node's first child is self, there's not chaining.
-        isChained = ReadByte() != NoteOn;
+    // TODO: Range offset varies by part type
+    local int octave = (n / 12) + 3;
+
+    return Str("%s%d (%d)", name, octave, n);
+}
+
+string ReadVelocityValue(byte &v)
+{
+    if (v > 0) {
+        return Str("%d (%d)", (v + 1 << 3) - 1, v);
     }
     else {
-        // If child's child has zero velocity, there's no further chaining.
-        isChained = ReadByte(FTell() + 1) != 0;
+        return "0";
     }
-    if (isChained) {
-        Note Chained(0);
-    }
-    byte NoteOff;
-    if (!root) {
-        byte VelocityOff : 4;
-        byte LengthOff : 4;
-    }
-    if (NoteOff & 0x40) {
-        byte Unknown;
-    }
-    // Optional note-off velocity?
-    //else if (ReadByte() == 0) {
-    //    byte VelocityOff : 4;
-    //    byte LengthOff : 4;
-    //}
-} Note;
+}
+
+// New hypothesis for E-20/TN-SC1-nn - oct 2024
+// 1 bit: is program change
+//     1: 7-bit program
+//     0: 1 bit is controller or delta?
+//        1: 6-bit value
+//            Multiple bytes or other event types?
+//        0: 6-bit value:
+//            0x3F (all bits set): end of track
+//            Else:
+//                Note
+//                4-bit velocity
+//                4-bit delta
 
 typedef struct
 {
     local EventType Type;
 
-    byte Flag : 1;
-    if (Flag) {
+    byte IsProgramChange : 1;
+    if (IsProgramChange) {
         Type = EventProgramChange;
         byte Program : 7;
     }
     else {
-        byte Delta : 7;
-        if (ReadByte() == 0x3F) {
+        byte IsElse : 1;
+        local byte Value = ReadByte() & 0x3F;
+        if (IsElse) {
+            Type = EventUnknown;
+            byte unknown0 : 6;
+            //byte unknown1;
+            //byte unknown2;
+            //byte unknown3;
+        }
+        else if (Value == END_OF_TRACK) {
             Type = EventEnd;
-            byte EndOfTrack;
+            byte EndOfTrack : 6;
         }
         else {
             Type = EventNote;
-            Note n(1);
+            byte Note : 6 <read=ReadNoteValue>;
+            byte Velocity : 4 <read=ReadVelocityValue>;
+            byte Delta : 4;
         }
     }
-} Event <read=Str("Event %s", EnumToString(e.Type)),optimize=false>;
+} EventV0 <read=ReadEventV0,optimize=false>;
+
+string ReadEventV0(EventV0 &e)
+{
+    local string type = EnumToString(e.Type);
+
+    switch (e.Type) {
+        case EventProgramChange:
+            return Str("%s: %d", type, e.Program);
+        case EventUnknown:
+            return Str("%s: %d ...", type, e.unknown0);
+        case EventNote:
+            return Str("%s: %s vel: %s del: %d", type, ReadNoteValue(e.Note), ReadVelocityValue(e.Velocity), e.Length);
+        case EventEnd:
+            return type;
+    }
+}
 
 // Chunk of custom coded MIDI messages
-typedef struct
+typedef struct (EventVersion ver)
 {
-    while (true) {
-        Event Events;
-        if (Events.Type == EventEnd) break;
+    switch (ver) {
+        case EventVersion0:
+            local int i = 0;
+            while (true) {
+                EventV0 Events;
+                if (Events.Type == EventEnd || i++ > 50) break;
+            }
+            break;
+        case EventVersion1:
+            EventV0 Events[5];
+            break;
     }
 } Chunk <read=ReadChunk,optimize=false>;
 
 string ReadChunk(Chunk &c)
 {
-/*
-Drums?
-0 80  Standard
-1 88? Room
-2 90  Power
-3 98  Electronic
-4 99  TR-808
-5 Jazz
-6 Brush
-7 Orchestra
-8 Sfx
-
-Velocity is stored in 4 bits (127, 119, 111, 103, 95, 87, 79, 71, 63, 55, 47, 39, 31, 23, 15, 7)
-
-M'TOWN Drums Phrase lengths (notes)
-
-Intro         47 (Data[4],  4.21 bpn)
-Original      94 (Data[0],  4.05 bpn)
-To variation ~13 (Data[2]?, 5.07 bpn)
-Variation     94 (Data[1],  4.01 bpn)
-To original  ~16 (Data[3]?, 5.06 bpn)
-Ending        36 (Data[5],  3.81 bpn)
-
-Event:
-byte HasDelta : 1
-if (HasDelta)
-    byte delta : 7
-    byte note // 0: C3
-else
-    byte note : 7
-byte velocity : 4
-byte unknown :4
-int
-*/
-
-    local string s;
-    local int i, m;
-    for (i = 0, m = Min(50, sizeof(c)); i < m; i++) {
-        SPrintf(s, "%s %02X", s, c.cmd[i]);
-    }
-    SPrintf(s, "%s ... (%d)", s, sizeof(c));
-    return s;
-return "...";
+    return "...";
 }
 
 typedef struct (int count)
 {
     BitfieldDisablePadding();
     int Unknown : 24;
-    Chunk Chunks[count];
+    Chunk Chunks(EventVersion0)[count];
 } ChunkCollection <comment=Str("%d", Unknown),optimize=false>;
 
 typedef struct (byte segment, int64 styleSegments[])
@@ -206,7 +219,7 @@ typedef struct (byte segment, int64 styleSegments[])
     local int64 Full = styleSegments[segment - 1] + Offset;
 } Ptr <read=Str("%X:%04X (%06X)", Segment, Offset, Full)>;
 
-// TODO: Figure out the segments are mapped. Endianess change? Interleaving?
+// TODO: Figure out how the segments are mapped. Endianess change? Interleaving?
 local int segmap[18];
 segmap[ 0] = 1;
 segmap[ 1] = 0;
@@ -229,7 +242,7 @@ segmap[15] = 17; // !!
 segmap[16] = 16; // !!
 segmap[17] = 14;
 
-typedef struct (int count, int64 styleSegments[])
+typedef struct (int count, int64 styleSegments[], EventVersion ver)
 {
     struct (int count, int64 styleSegments[]) {
         local int i;
@@ -246,21 +259,21 @@ typedef struct (int count, int64 styleSegments[])
     local int i;
     for (i = 0; i < count; i++) {
         FSeek(Ptrs.Offsets[i].Full);
-        Chunk Data;
+        Chunk Data(ver);
     }
     FSeek(pos);
 } ChunkRefs <optimize=false>;
 
-typedef struct (char name[], int64 styleSegments[])
+typedef struct (char name[], int64 styleSegments[], EventVersion ver)
 {
     local string Name = name;
-    ChunkRefs DrumChunks(PHRASES, styleSegments);
+    ChunkRefs DrumChunks(PHRASES, styleSegments, ver);
     ubyte  TicksPerBar;
     ubyte  Tempo;
     // Current hypothesis:
     // 4 (Bass, Accomp1, Accomp2, Accomp3) * 18 (3 chord variants (major, minor, seventh) * 6 phrases (Intro, Original, Variation, ToOriginal, ToVariation, Ending))
-    ChunkRefs BassChunks(PHRASES * CHORD_MODES, styleSegments);
-    ChunkRefs Part2Chunks(PHRASES * CHORD_MODES, styleSegments);
-    ChunkRefs Part3Chunks(PHRASES * CHORD_MODES, styleSegments);
-    ChunkRefs Part4Chunks(PHRASES * CHORD_MODES, styleSegments);
+    ChunkRefs BassChunks(PHRASES * CHORD_MODES, styleSegments, ver);
+    ChunkRefs Part2Chunks(PHRASES * CHORD_MODES, styleSegments, ver);
+    ChunkRefs Part3Chunks(PHRASES * CHORD_MODES, styleSegments, ver);
+    ChunkRefs Part4Chunks(PHRASES * CHORD_MODES, styleSegments, ver);
 } StyleHeader <read=Str("%s %d/4 @ %d BPM", Name, TicksPerBar / TICKS_PER_BEAT, Tempo)>;
