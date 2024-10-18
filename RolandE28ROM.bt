@@ -106,7 +106,7 @@ StyleNames[63].Value = "S BOOGIE";
 local int s;
 for (s = 0; s < 64; s++) {
     // TODO: Verify style order.
-    StyleHeader StyleHeaders(StyleNames[s].Value, StyleSegments)<optimize=false>;
+    StyleHeader StyleHeaders(StyleNames[s].Value, StyleSegments, EventVersion1)<optimize=false>;
 }
 
 // Instruments
@@ -167,37 +167,38 @@ ChunkCollection Chunks6(353);
 FSeek(0x70000);
 ChunkCollection Chunks7(785);
 
-// Demos?
 FSeek(0x78000);
+typedef struct (int length) {
+    ubyte unknown0[3];
+    ubyte style;
+    ubyte unknown1[21];
+    ubyte tempo;
+    ubyte unknown2[16];
+    ubyte style1;
+    ubyte unknown3[length - 43];
+} StyleDemoChunk<read=Str("%s @ %d BPM", StyleNames[style].Value, tempo)>;
+
 struct {
     struct {
-        uint16 Unknown0;
+        uint16 Segment;
         uint16 Offset;
     } TOC[8];
 
-    local int c, o, offsetcount;
+    local int c, o;
     for (c = 0; c < 8; c++) {
         struct {
-            offsetcount = 0;
-            do {
-                uint16 offsets;
-                offsetcount++;
-            } while (offsets != 0x0F0F);
+            uint16 Offsets[4];
+            uint8 Segments[2];
             
-            for (o = 0; o < offsetcount - 1; o++) {
-                struct {
-                    local int nextOffset = offsets[o + 1];
-                    if (nextOffset == 0x0F0F) {
-                        if (c == 7) {
-                            nextOffset = 0xF428;
-                        }
-                        else {
-                            nextOffset = Chunks8.TOC[c+1].Offset;
-                        }
-                    }
-                    ubyte data[nextOffset - offsets[o]];
-                } Chunks;
+            ubyte UnknownChunk1[Offsets[1] - Offsets[0]];
+            ubyte ToneDemoChunk[Offsets[2] - Offsets[1]];
+            ubyte UnknownChunk2[Offsets[3] - Offsets[2]];
+            if (c < 7) {
+                StyleDemoChunk StyleDemo(TOC[c + 1].Offset - Offsets[3]);
             }
-        } ChunksContainer;
+            else {
+                StyleDemoChunk StyleDemo(560);
+            }
+        } DemoContainer;
     }
-} Chunks8;
+} Demos;
